@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TecnoShop - Catálogo de Hardware</title>
+    <link rel="stylesheet" href="../css/style.css">
+</head>
+<body> 
+
+    <header class="header">
+        <div class="nav-container">
+            <a href="productos.html" class="brand-link">
+                <img src="../images/LogoTienda.jpg" alt="Logo TecnoShop" class="header-logo-img">
+                <div class="brand-box">
+                    <span class="logo">TecnoShop</span>
+                </div>
+            </a>
+
+            <div class="search-bar">
+                <input type="text" id="searchInput" placeholder="Buscar notebooks, procesadores...">
+                <button type="button">🔍</button>
+            </div>
+
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="productos.html" class="active">Productos</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="login.html">Acceso</a></li>
+                    <li>
+                        <a href="carrito.html" class="cart-icon">
+                            🛒 <span class="cart-count">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content catalog-layout">
+        <section class="productos-section">
+            <h2>Catálogo de Productos</h2>
+            <div id="grilla-productos" class="productos-grid">
+                
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="footer">
+        <p>TecnoShop - Cotizador y Tienda de Hardware</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/carrito.js"></script>
+    <script src="js/validaciones.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let contenedor = document.getElementById("grilla-productos");
+            let htmlAcumulado = "";
+
+            for (let i = 0; i < catalogoProductos.length; i++) {
+                let prod = catalogoProductos[i];
+                
+                let categoriaFormateada = prod.categoria.charAt(0).toUpperCase() + prod.categoria.slice(1);
+
+                htmlAcumulado += `
+                <div class="product-card">
+                    <div class="product-img-box">
+                        <img src="${prod.img}" alt="${prod.nombre}">
+                    </div>
+                    <div class="product-info">
+                        <span class="product-category">${categoriaFormateada}</span>
+                        <h3>${prod.nombre}</h3>
+                        <div class="product-price">$${prod.precio.toLocaleString("es-CL")}</div>
+                        <button class="btn-primary" onclick="addToCart(${prod.id})">Agregar al Carrito</button>
+                    </div>
+                </div>`;
+            }
+
+            contenedor.innerHTML = htmlAcumulado;
+        });
+    </script>
+</body>
+</html>

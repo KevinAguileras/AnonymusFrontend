@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito de Compras - TecnoShop</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <header class="header">
+        <div class="nav-container">
+            <h1 class="logo"><a href="index.html">TecnoShop</a></h1>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html">Inicio</a></li>
+                    <li><a href="productos.html">Productos</a></li>
+                    <li><a href="contacto.html">Contacto</a></li>
+                    <li><a href="login.html">Acceso</a></li>
+                    <li><a href="blogs.html">Blogs</a></li>
+                    <li>
+                        <a href="carrito.html" class="cart-icon active">
+                            🛒 Carrito <span class="cart-count">0</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <section class="cart-section">
+            <div class="section-title-bar">
+                <h2>Tu Carrito de Compras</h2>
+                <a href="productos.html">Seguir comprando</a>
+            </div>
+
+            <div class="cart-layout">
+                <div class="cart-items-box">
+                    <div class="table-responsive">
+                        <table class="data-table" id="cartTable">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th>Precio</th>
+                                    <th>Cantidad</th>
+                                    <th>Subtotal</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="cart-empty" id="cartEmpty" hidden>
+                        <p class="cart-empty-icon">🛒</p>
+                        <h3>Tu carrito está vacío</h3>
+                        <p>Agrega productos desde el catálogo para verlos aquí.</p>
+                        <a href="productos.html" class="btn-primary btn-inline">Ver productos</a>
+                    </div>
+                </div>
+
+                <aside class="cart-summary">
+                    <h3>Resumen del pedido</h3>
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="cartSubtotal">$0</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Envío</span>
+                        <span id="cartShipping">Gratis</span>
+                    </div>
+                    <div class="summary-row summary-total">
+                        <span>Total a pagar</span>
+                        <span id="cartTotal">$0</span>
+                    </div>
+                    <button class="btn-primary" id="btnFinalizar" onclick="finalizarCompra()">Finalizar Compra</button>
+                    <p class="summary-note">Pago 100% seguro · Devoluciones dentro de 10 días</p>
+                </aside>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>TecnoShop</p>
+    </footer>
+
+    <script src="js/main.js"></script>
+    <script src="js/carrito.js"></script>
+</body>
+</html>
