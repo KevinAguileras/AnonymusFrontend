@@ -1,8 +1,10 @@
-name: Deploy static content to Pages
+
+name: CI y despliegue a GitHub Pages
 
 on:
   push:
-    branches: ["main"] # Cambia por "master" si tu rama principal se llama así
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -10,27 +12,58 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
+  group: github-pages
   cancel-in-progress: false
 
 jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar codigo
+        run: npm run lint
+
+      - name: Instalar Chromium
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium
+          echo "CHROME_BIN=$(command -v chromium)" >> "$GITHUB_ENV"
+
+      - name: Ejecutar pruebas
+        run: npm run test:coverage -- --browsers ChromeHeadlessCI
+
+      - name: Compilar React
+        run: npm run build
+
+      - name: Configurar GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Subir archivos compilados
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
   deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.' # Si usas React/Vite/Angular, cambia '.' por la carpeta del build (ej: './dist' o './build')
-
-      - name: Deploy to GitHub Pages
+      - name: Publicar en GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
