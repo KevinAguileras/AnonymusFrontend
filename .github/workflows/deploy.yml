@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Descargar repositorio
@@ -35,16 +35,18 @@ jobs:
       - name: Verificar codigo
         run: npm run lint
 
-      - name: Instalar Chromium
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y chromium
-          echo "CHROME_BIN=$(command -v chromium)" >> "$GITHUB_ENV"
+      - name: Instalar Google Chrome
+        id: chrome
+        uses: browser-actions/setup-chrome@v2
+        with:
+          chrome-version: stable
 
-      - name: Ejecutar pruebas
+      - name: Ejecutar pruebas Jasmine y Karma
+        env:
+          CHROME_BIN: ${{ steps.chrome.outputs.chrome-path }}
         run: npm run test:coverage -- --browsers ChromeHeadlessCI
 
-      - name: Compilar React
+      - name: Compilar frontend
         run: npm run build
 
       - name: Configurar GitHub Pages
@@ -57,7 +59,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     environment:
       name: github-pages
