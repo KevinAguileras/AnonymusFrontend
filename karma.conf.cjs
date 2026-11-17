@@ -1,7 +1,9 @@
+const webpack = require('webpack')
+
 module.exports = function (config) {
   config.set({
     basePath: '',
-    frameworks: ['jasmine'],
+    frameworks: ['jasmine', 'webpack'],
     files: [
       'src/tests/**/*.spec.jsx'
     ],
@@ -10,6 +12,11 @@ module.exports = function (config) {
     },
     webpack: { 
       mode: 'development',
+      plugins: [
+        new webpack.DefinePlugin({
+          'import.meta.env.BASE_URL': JSON.stringify('/')
+        })
+      ],
       module: {
         rules: [
           {
