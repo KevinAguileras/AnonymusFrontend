@@ -141,3 +141,28 @@ End Lab. Verificar estados: cerrar el navegador no detiene necesariamente RDS.
 
 Referencias: [proxy Vite](https://vite.dev/config/server-options#server-proxy),
 [ejecución npm en IntelliJ](https://www.jetbrains.com/help/idea/run-debug-configuration-npm.html).
+
+## Cierre de la integración (20-11-2026)
+
+El inventario local no aparecía al conectar con RDS porque el catálogo dejó de leer
+`src/data/productos.js`/`localStorage` y pasó a leer solo la API. Para migrarlo se agregó
+`scripts/inventario.json` y `scripts/migrar_inventario.py`, que crean 4 categorías y
+suben 19 productos con imagen, oferta y stock inicial 20. Es repetible: omite lo que
+ya existe.
+
+```bash
+ADMIN_EMAIL='correo-admin' ADMIN_PASSWORD='clave-admin' \
+python3 scripts/migrar_inventario.py
+```
+
+La primera cuenta administradora se promueve desde MySQL, nunca desde el formulario
+público:
+
+```bash
+mysql -h 127.0.0.1 -P 13306 -u anonymusadmin -p \
+  --ssl-mode=REQUIRED tecnoshop \
+  -e "UPDATE usuarios SET rol='ADMINISTRADOR' WHERE email='correo-admin';
+      SELECT email, rol FROM usuarios WHERE email='correo-admin';"
+```
+
+Checklist final y evidencia: [EVIDENCIA.md](EVIDENCIA.md).
