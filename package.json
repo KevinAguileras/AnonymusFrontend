@@ -1,19 +1,17 @@
 {
   "name": "tecno-shop-evaluacion2",
   "version": "2.0.0",
-  "description": "TecnoShop - Evaluación 2 frontend React",
+  "description": "TecnoShop - Evaluaci\u00f3n 2 frontend React",
   "private": true,
   "type": "module",
- 
-"scripts": {
-  "dev": "vite",
-  "build": "vite build",
-  "preview": "vite preview",
-  "lint": "eslint .",
-  "test": "karma start karma.conf.cjs",
-  "test:coverage": "karma start karma.conf.cjs --single-run"
-},
-
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "test": "karma start karma.conf.cjs",
+    "test:coverage": "karma start karma.conf.cjs --single-run"
+  },
   "dependencies": {
     "bootstrap": "5.3.8",
     "react": "19.3.0",
@@ -39,5 +37,8 @@
     "karma-webpack": "5.0.1",
     "vite": "8.3.2",
     "webpack": "5.101.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
   }
 }

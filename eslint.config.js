@@ -4,7 +4,7 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["dist/**", "node_modules/**", "legacy/**"]
+    ignores: ["dist/**", "node_modules/**", "legacy/**", "coverage/**", ".tools/**"]
   },
   {
     files: ["src/**/*.{js,jsx}"],
@@ -20,8 +20,9 @@ export default [
     },
     rules: {
       ...js.configs.recommended.rules,
-      "no-unused-vars": "warn",
+      "no-unused-vars": ["warn", { "varsIgnorePattern": "^[A-Z]" }],
       "no-undef": "warn"
     }
-  }
+  },
+  { files: ["src/tests/**/*.{js,jsx}"], languageOptions: { globals: { ...globals.jasmine, require: "readonly", expectAsync: "readonly" } } }
 ];

@@ -1,89 +1,33 @@
-import React, { act } from 'react'
-import { createRoot } from 'react-dom/client'
+import React from 'react'
+import { products, categories, response, session } from './apiFixtures'
+import { montar, esperar, campoDeEtiqueta, escribir, enviarFormulario, clic, botonConTexto, simularLocalStorage } from './ayudas'
 import Admin from '../pages/Admin'
-
-globalThis.IS_REACT_ACT_ENVIRONMENT = true
-
-describe('Admin (CRUD de productos)', () => {
-  let memoria
-  let contenedor
-  let raiz
-
-  function escribir(campo, valor) {
-    const asignar = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set
-    act(() => {
-      asignar.call(campo, valor)
-      campo.dispatchEvent(new Event('input', { bubbles: true }))
-    })
-  }
-
-  function campoDe(etiqueta) {
-    const grupos = Array.from(contenedor.querySelectorAll('.grupo-input'))
-    return grupos.find((grupo) => grupo.textContent.includes(etiqueta)).querySelector('input')
-  }
-
-  function botonConTexto(texto) {
-    return Array.from(contenedor.querySelectorAll('button')).find((boton) => boton.textContent.includes(texto))
-  }
-
-  function crearProducto(nombre, precio) {
-    escribir(campoDe('Nombre'), nombre)
-    escribir(campoDe('Precio'), precio)
-    act(() => { botonConTexto('Crear producto').click() })
-  }
-
+describe('Administración conectada a REST', () => {
+  let pagina, items
   beforeEach(() => {
-    memoria = {}
-    spyOn(localStorage, 'getItem').and.callFake((clave) => (clave in memoria ? memoria[clave] : null))
-    spyOn(localStorage, 'setItem').and.callFake((clave, valor) => { memoria[clave] = String(valor) })
-    spyOn(localStorage, 'removeItem').and.callFake((clave) => { delete memoria[clave] })
-    contenedor = document.createElement('div')
-    document.body.appendChild(contenedor)
-    raiz = createRoot(contenedor)
-    act(() => { raiz.render(<Admin />) })
+    simularLocalStorage(); sessionStorage.setItem('anonymusSession',JSON.stringify(session('ADMINISTRADOR'))); items=[]
+    spyOn(window,'fetch').and.callFake((url,options) => {
+      if (url==='/api/v1/categorias') return response(categories)
+      if (options.method==='POST') { const item={...JSON.parse(options.body),id:50,categoria:categories[1]}; items.push(item); return response(item,201) }
+      if (options.method==='DELETE') { items=[]; return response(null,204) }
+      return response(items)
+    })
   })
-
-  afterEach(() => {
-    act(() => raiz.unmount())
-    contenedor.remove()
+  afterEach(() => { pagina?.desmontar(); sessionStorage.clear() })
+  it('crea y vuelve a consultar productos persistidos', async () => {
+    pagina=montar(<Admin />); await esperar()
+    escribir(campoDeEtiqueta(pagina.contenedor,'Nombre'),'Mouse'); escribir(campoDeEtiqueta(pagina.contenedor,'Precio'),'5000'); escribir(campoDeEtiqueta(pagina.contenedor,'Categoría'),'2'); escribir(campoDeEtiqueta(pagina.contenedor,'Stock'),'4')
+    enviarFormulario(pagina.contenedor.querySelector('form')); await esperar()
+    expect(pagina.contenedor.querySelector('tbody').textContent).toContain('Mouse'); expect(pagina.contenedor.textContent).toContain('Producto guardado correctamente')
   })
-
-  it('debe mostrar el formulario de nuevo producto y la lista vacía al comienzo', () => {
-    expect(contenedor.textContent).toContain('Nuevo producto')
-    expect(contenedor.textContent).toContain('Todavía no hay productos creados')
+  it('elimina solo tras confirmar y refresca el catálogo', async () => {
+    items=[products[0]]; spyOn(window,'confirm').and.returnValue(true); pagina=montar(<Admin />); await esperar()
+    const remove=Array.from(pagina.contenedor.querySelectorAll('tbody button')).find((b)=>b.textContent==='Eliminar')
+    clic(remove); await esperar(); expect(pagina.contenedor.querySelector('tbody').textContent).toBe('')
   })
-
-  it('debe mostrar un error y no guardar si el nombre está vacío', () => {
-    act(() => { botonConTexto('Crear producto').click() })
-    expect(contenedor.querySelector('.alert-info').textContent).toContain('Completa el nombre')
-    expect(memoria['Catalago']).toBeUndefined()
-  })
-
-  it('debe crear un producto y mostrarlo en la tabla', () => {
-    crearProducto('Mouse de prueba', '15990')
-    expect(contenedor.querySelector('.alert-info').textContent).toContain('guardado correctamente')
-    expect(contenedor.querySelector('tbody').textContent).toContain('Mouse de prueba')
-  })
-
-  it('debe cargar el producto en el formulario al presionar Editar', () => {
-    crearProducto('Mouse de prueba', '15990')
-    act(() => { botonConTexto('Editar').click() })
-    expect(contenedor.textContent).toContain('Guardar cambios')
-    expect(campoDe('Nombre').value).toBe('Mouse de prueba')
-  })
-
-  it('debe eliminar el producto cuando el administrador confirma', () => {
-    spyOn(window, 'confirm').and.returnValue(true)
-    crearProducto('Mouse de prueba', '15990')
-    act(() => { botonConTexto('Eliminar').click() })
-    expect(window.confirm).toHaveBeenCalled()
-    expect(contenedor.textContent).not.toContain('Mouse de prueba')
-  })
-
-  it('no debe eliminar el producto si el administrador cancela', () => {
-    spyOn(window, 'confirm').and.returnValue(false)
-    crearProducto('Mouse de prueba', '15990')
-    act(() => { botonConTexto('Eliminar').click() })
-    expect(contenedor.querySelector('tbody').textContent).toContain('Mouse de prueba')
+  it('vendedor ve productos pero no formularios ni botones de edición', async () => {
+    sessionStorage.setItem('anonymusSession',JSON.stringify(session('VENDEDOR'))); items=[products[0]]; pagina=montar(<Admin />); await esperar()
+    expect(pagina.contenedor.querySelector('form')).toBeNull(); expect(botonConTexto(pagina.contenedor,'Eliminar')).toBeUndefined()
+    expect(pagina.contenedor.querySelector('tbody').textContent).toContain(products[0].nombre)
   })
 })

@@ -1,3 +1,4 @@
+import { session } from './apiFixtures'
 import React, { act } from 'react'
 import { clic, enviarFormulario, escribir, montar, simularLocalStorage } from './ayudas'
 import Header from '../components/Header'
@@ -12,11 +13,13 @@ describe('Header', () => {
   let memoria
 
   function abrir(datos) {
+    sessionStorage.clear()
+    if (datos.usuarioActivo) sessionStorage.setItem('anonymusSession', JSON.stringify({ ...session(), ...JSON.parse(datos.usuarioActivo) }))
     memoria = simularLocalStorage(datos)
     pagina = montar(<Header />)
   }
 
-  afterEach(() => pagina.desmontar())
+  afterEach(() => { pagina.desmontar(); sessionStorage.clear() })
 
   it('debe mostrar el enlace de acceso cuando no hay sesión', () => {
     abrir({})

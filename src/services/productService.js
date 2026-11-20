@@ -1,66 +1,18 @@
-import { productosIniciales } from '../data/productos'
-
-const CATALOGO_KEY = 'Catalago'
-
-function readExtraProducts() {
-  try {
-    return JSON.parse(localStorage.getItem(CATALOGO_KEY)) || []
-  } catch {
-    return []
-  }
+import fallbackImage from '../assets/LogoTienda.jpg'
+import { api } from './api'
+function normalize(p) {
+  return { ...p, categoriaId: p.categoria.id, categoria: p.categoria.nombre, img: p.img ? (p.img.startsWith('/images/') ? `${import.meta.env.BASE_URL}${p.img.slice(1)}` : p.img) : fallbackImage }
 }
-
-function writeExtraProducts(products) {
-  localStorage.setItem(CATALOGO_KEY, JSON.stringify(products))
+function payload(p) {
+  return { nombre: p.nombre.trim(), categoriaId: Number(p.categoriaId), precio: Number(p.precio), img: p.img,
+    oferta: Boolean(p.oferta), precioAnterior: p.oferta && p.precioAnterior !== '' && p.precioAnterior != null ? Number(p.precioAnterior) : null, stock: Number(p.stock) }
 }
-
-export function getProducts() {
-  return [...productosIniciales, ...readExtraProducts()]
-}
-
-export function getProductById(id) {
-  return getProducts().find((product) => Number(product.id) === Number(id))
-}
-
-export function createProduct(product) {
-  const extra = readExtraProducts()
-  const nextId = Math.max(0, ...getProducts().map((item) => Number(item.id) || 0)) + 1
-  const newProduct = {
-    id: nextId,
-    nombre: product.nombre,
-    categoria: product.categoria,
-    precio: Number(product.precio),
-    img: product.img || '/images/LogoTienda.jpg',
-    oferta: Boolean(product.oferta),
-    precioAnterior: product.oferta ? Number(product.precioAnterior || product.precio) : undefined
-  }
-  extra.push(newProduct)
-  writeExtraProducts(extra)
-  return newProduct
-}
-
-export function updateProduct(updatedProduct) {
-  const extra = readExtraProducts()
-  const index = extra.findIndex((product) => Number(product.id) === Number(updatedProduct.id))
-  if (index === -1) return null
-
-  const cleanProduct = {
-    ...extra[index],
-    ...updatedProduct,
-    precio: Number(updatedProduct.precio)
-  }
-  extra[index] = cleanProduct
-  writeExtraProducts(extra)
-  return cleanProduct
-}
-
-export function deleteProduct(id) {
-  const extra = readExtraProducts()
-  const filtered = extra.filter((product) => Number(product.id) !== Number(id))
-  writeExtraProducts(filtered)
-  return filtered.length !== extra.length
-}
-
-export function resetExtraProducts() {
-  localStorage.removeItem(CATALOGO_KEY)
-}
+export const getProducts = async (options) => (await api('/productos', options)).map(normalize)
+export const getProductById = async (id, options) => normalize(await api(`/productos/${id}`, options))
+export const createProduct = async (p) => normalize(await api('/productos', { method: 'POST', body: payload(p) }))
+export const updateProduct = async (p) => normalize(await api(`/productos/${p.id}`, { method: 'PUT', body: payload(p) }))
+export const deleteProduct = (id) => api(`/productos/${id}`, { method: 'DELETE' })
+export const getCategories = (options) => api('/categorias', options)
+export const createCategory = (nombre) => api('/categorias', { method: 'POST', body: { nombre: nombre.trim() } })
+export const updateCategory = (id, nombre) => api(`/categorias/${id}`, { method: 'PUT', body: { nombre: nombre.trim() } })
+export const deleteCategory = (id) => api(`/categorias/${id}`, { method: 'DELETE' })

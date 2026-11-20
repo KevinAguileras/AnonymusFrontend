@@ -1,3 +1,5 @@
+import useSession from '../hooks/useSession'
+import { logout as clearSession } from '../services/session'
 import logoTienda from '../assets/LogoTienda.jpg'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useEffect, useState } from 'react'
@@ -6,13 +8,12 @@ import { cartCount, getCart } from '../services/cartService'
 function Header() {
   const navigate = useNavigate()
   const [count, setCount] = useState(cartCount())
-  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('usuarioActivo') || 'null'))
+  const user = useSession()
   const [search, setSearch] = useState('')
 
   useEffect(() => {
     const update = () => {
       setCount(cartCount(getCart()))
-      setUser(JSON.parse(localStorage.getItem('usuarioActivo') || 'null'))
     }
     window.addEventListener('storage', update)
     window.addEventListener('cartUpdated', update)
@@ -30,8 +31,7 @@ function Header() {
   }
 
   const logout = () => {
-    localStorage.removeItem('usuarioActivo')
-    setUser(null)
+    clearSession()
     navigate('/')
   }
 
@@ -57,7 +57,9 @@ function Header() {
             <li><NavLink to="/categorias">Categorías</NavLink></li>
             <li><NavLink to="/ofertas">Ofertas</NavLink></li>
             <li><NavLink to="/blogs">Blogs</NavLink></li>
-            <li><NavLink to="/admin">Admin</NavLink></li>
+            {['ADMINISTRADOR', 'VENDEDOR'].includes(user?.rol) && <li><NavLink to="/admin">{user.rol === 'ADMINISTRADOR' ? 'Admin' : 'Productos'}</NavLink></li>}
+            {user && <li><NavLink to="/pedidos">{user.rol === 'CLIENTE' ? 'Mis compras' : 'Órdenes'}</NavLink></li>}
+            {user?.rol === 'ADMINISTRADOR' && <li><NavLink to="/usuarios">Usuarios</NavLink></li>}
             {!user ? (
               <li><NavLink to="/login">Acceso</NavLink></li>
             ) : (

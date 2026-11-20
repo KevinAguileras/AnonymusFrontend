@@ -34,7 +34,7 @@ function ProductCard({ product, onCartChange }) {
           </div>
         )}
         <div className="d-grid gap-2">
-          <button className="btn-primary" type="button" onClick={handleAdd}>Agregar al Carrito</button>
+          <button className="btn-primary" type="button" disabled={product.stock < 1} onClick={handleAdd}>Agregar al Carrito</button>
           <Link className="btn btn-outline-secondary btn-sm" to={`/producto/${product.id}`}>Ver detalle</Link>
         </div>
       </div>

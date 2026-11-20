@@ -1,11 +1,15 @@
+import useResource from '../hooks/useResource'
+import ResourceStatus from '../components/ResourceStatus'
 import { Link, useParams } from 'react-router-dom'
-import { useMemo } from 'react'
+import { useCallback } from 'react'
 import { getProductById } from '../services/productService'
 import { addToCart } from '../services/cartService'
 
 function ProductDetail() {
   const { id } = useParams()
-  const product = useMemo(() => getProductById(id), [id])
+  const load = useCallback((options) => getProductById(id, options), [id])
+  const { data: product, loading, error } = useResource(load, null)
+  if (loading || error) return <ResourceStatus loading={loading} error={error} />
 
   if (!product) {
     return <div className="alert alert-warning">Producto no encontrado.</div>
@@ -29,11 +33,11 @@ function ProductDetail() {
           <span className="product-category">{product.categoria}</span>
           <h1>{product.nombre}</h1>
           <p className="detalle-descripcion">Producto disponible en TecnoShop. 
-            Disponibilidad: {product.stock} 3</p>
+            Disponibilidad: {product.stock} unidades</p>
           {product.precioAnterior && <p className="old-price">${Number(product.precioAnterior).toLocaleString('es-CL')}</p>}
           <div className="detalle-precio">${Number(product.precio).toLocaleString('es-CL')}</div>
           <div className="d-flex gap-2 flex-wrap">
-            <button className="btn-comprar" type="button" onClick={add}>Agregar al carrito</button>
+            <button className="btn-comprar" type="button" disabled={product.stock < 1} onClick={add}>Agregar al carrito</button>
             <Link className="btn btn-outline-primary align-self-center" to="/carrito">Ir al carrito</Link>
           </div>
         </div>

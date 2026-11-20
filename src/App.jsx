@@ -1,3 +1,6 @@
+import ProtectedRoute from './components/ProtectedRoute'
+import Orders from './pages/Orders'
+import Users from './pages/Users'
 import { Route, Routes } from 'react-router-dom'
 import Layout from './components/Layout'
 import Home from './pages/Home'
@@ -26,16 +29,18 @@ function App() {
         <Route path="/ofertas" element={<Offers />} />
         <Route path="/producto/:id" element={<ProductDetail />} />
         <Route path="/carrito" element={<Cart />} />
-        <Route path="/checkout" element={<Checkout />} />
+        <Route path="/checkout" element={<ProtectedRoute roles={['CLIENTE', 'ADMINISTRADOR']}><Checkout /></ProtectedRoute>} />
         <Route path="/compra-exitosa" element={<PurchaseResult success />} />
         <Route path="/compra-fallida" element={<PurchaseResult success={false} />} />
         <Route path="/login" element={<Login />} />
         <Route path="/registro" element={<Register />} />
-        <Route path="/perfil" element={<Profile />} />
+        <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/blogs" element={<Blogs />} />
         <Route path="/contacto" element={<Contact />} />
         <Route path="/nosotros" element={<About />} />
-        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin" element={<ProtectedRoute roles={['ADMINISTRADOR', 'VENDEDOR']}><Admin /></ProtectedRoute>} />
+        <Route path="/pedidos" element={<ProtectedRoute><Orders /></ProtectedRoute>} />
+        <Route path="/usuarios" element={<ProtectedRoute roles={['ADMINISTRADOR']}><Users /></ProtectedRoute>} />
         <Route path="*" element={<Home />} />
       </Routes>
     </Layout>

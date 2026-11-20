@@ -1,30 +1,25 @@
 import { useState } from 'react'
-
-function Profile() {
-  const saved = JSON.parse(localStorage.getItem('usuarioActivo') || 'null')
-  const [user, setUser] = useState(saved || { nombre: '', email: '' })
-  const [savedMessage, setSavedMessage] = useState('')
-
-  const save = (event) => {
+import useSession from '../hooks/useSession'
+import { updateAccount } from '../services/authService'
+export default function Profile() {
+  const user = useSession()
+  const [nombre, setNombre] = useState(user?.nombre || '')
+  const [message, setMessage] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const save = async (event) => {
     event.preventDefault()
-    localStorage.setItem('usuarioActivo', JSON.stringify(user))
-    setSavedMessage('Datos actualizados correctamente.')
-    window.dispatchEvent(new Event('storage'))
+    if (busy) return
+    setError(''); setMessage(''); setBusy(true)
+    try { await updateAccount(nombre.trim()); setMessage('Datos actualizados correctamente.') }
+    catch (err) { setError(err.message) }
+    finally { setBusy(false) }
   }
-
-  return (
-    <section>
-      <div className="section-title-bar" style={{ borderColor: 'var(--border-color)' }}><h2 style={{ color: 'var(--purple-700)' }}>Mi perfil</h2></div>
-      <form className="card p-4 shadow-sm" onSubmit={save}>
-        {savedMessage && <div className="alert alert-success">{savedMessage}</div>}
-        <div className="row g-3">
-          <div className="col-12 col-md-6"><label className="form-label">Nombre</label><input className="form-control" value={user.nombre} onChange={(event) => setUser({ ...user, nombre: event.target.value })} /></div>
-          <div className="col-12 col-md-6"><label className="form-label">Correo</label><input className="form-control" type="email" value={user.email} onChange={(event) => setUser({ ...user, email: event.target.value })} /></div>
-        </div>
-        <button className="btn btn-primary mt-4" type="submit">Guardar cambios</button>
-      </form>
-    </section>
-  )
+  return <section><h2>Mi perfil</h2><form className="card p-4" onSubmit={save}>
+    {error && <p role="alert" className="alert alert-danger">{error}</p>}
+    {message && <p role="status" className="alert alert-success">{message}</p>}
+    <div className="grupo-input"><label>Nombre</label><input value={nombre} required onChange={(e) => setNombre(e.target.value)} /></div>
+    <div className="grupo-input"><label>Correo</label><input value={user?.email || ''} readOnly /></div>
+    <p>Rol: {user?.rol}</p><button className="btn btn-primary" disabled={busy}>Guardar cambios</button>
+  </form></section>
 }
-
-export default Profile

@@ -1,3 +1,5 @@
+import useResource from '../hooks/useResource'
+import ResourceStatus from '../components/ResourceStatus'
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import ProductGrid from '../components/ProductGrid'
@@ -5,7 +7,7 @@ import { getProducts } from '../services/productService'
 
 function Products() {
   const [searchParams] = useSearchParams()
-  const [products] = useState(() => getProducts())
+  const { data: products, loading, error } = useResource(getProducts)
   const [search, setSearch] = useState(searchParams.get('q') || '')
   const [category, setCategory] = useState(searchParams.get('categoria') || 'todas')
   const [maxPrice, setMaxPrice] = useState('')
@@ -21,6 +23,11 @@ function Products() {
       return matchesSearch && matchesCategory && matchesPrice
     })
   }, [products, search, category, maxPrice])
+
+  useEffect(() => {
+    setSearch(searchParams.get('q') || '')
+    setCategory(searchParams.get('categoria') || 'todas')
+  }, [searchParams])
 
   useEffect(() => {
     document.title = 'TecnoShop - Catálogo'
@@ -56,7 +63,8 @@ function Products() {
         </div>
       </div>
 
-      <ProductGrid products={filteredProducts} />
+      <ResourceStatus loading={loading} error={error} />
+      {!loading && !error && <ProductGrid products={filteredProducts} />}
     </section>
   )
 }

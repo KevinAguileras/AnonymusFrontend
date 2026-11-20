@@ -1,60 +1,26 @@
 import React from 'react'
-import { botonConTexto, campoDeEtiqueta, clic, escribir, montar, simularLocalStorage } from './ayudas'
+import { response, session } from './apiFixtures'
+import { enviarFormulario, montar, simularLocalStorage, esperar } from './ayudas'
 import Checkout from '../pages/Checkout'
-
-const carrito = [
-  { id: 1, nombre: 'Teclado', precio: 10000, img: '/teclado.png', cantidad: 2 },
-  { id: 2, nombre: 'Mouse', precio: 5000, img: '/mouse.png', cantidad: 1 }
-]
-
-describe('Checkout', () => {
-  let pagina
-  let memoria
-
-  function abrirConCarrito(productos) {
-    memoria = simularLocalStorage({ tecnoShopCart: JSON.stringify(productos) })
-    pagina = montar(<Checkout />, { ruta: '/checkout' })
-  }
-
-  afterEach(() => pagina.desmontar())
-
-  it('debe avisar que no hay productos si el carrito está vacío', () => {
-    abrirConCarrito([])
-    expect(pagina.contenedor.textContent).toContain('No tienes productos para comprar')
+const cart=[{id:1,nombre:'Mouse',precio:1,cantidad:2}]
+describe('Compra REST', () => {
+  let pagina, memoria, fetchMock
+  beforeEach(() => { sessionStorage.setItem('anonymusSession',JSON.stringify(session())); memoria=simularLocalStorage({tecnoShopCart:JSON.stringify(cart)}); fetchMock=spyOn(window,'fetch'); pagina=montar(<Checkout />,{ruta:'/checkout'}) })
+  afterEach(() => { pagina.desmontar(); sessionStorage.clear() })
+  it('envía solo IDs y cantidades y usa el total confirmado por el servidor', async () => {
+    fetchMock.and.returnValue(response({id:9,total:10000},201)); enviarFormulario(pagina.contenedor.querySelector('form')); await esperar()
+    expect(JSON.parse(fetchMock.calls.mostRecent().args[1].body)).toEqual({items:[{productoId:1,cantidad:2}]})
+    expect(memoria.tecnoShopCart).toBeUndefined(); expect(pagina.rutaActual()).toBe('/compra-exitosa')
   })
-
-  it('debe mostrar el total a pagar', () => {
-    abrirConCarrito(carrito)
-    expect(pagina.contenedor.textContent).toContain('Total: $25.000')
+  it('conserva el carrito si falta stock', async () => {
+    fetchMock.and.returnValue(response({error:'Stock insuficiente'},400)); enviarFormulario(pagina.contenedor.querySelector('form')); await esperar()
+    expect(memoria.tecnoShopCart).toBeDefined(); expect(pagina.rutaActual()).toBe('/checkout'); expect(pagina.contenedor.textContent).toContain('Stock insuficiente')
   })
-
-  it('debe mostrar un error y conservar el carrito si faltan datos de entrega', () => {
-    abrirConCarrito(carrito)
-    clic(botonConTexto(pagina.contenedor, 'Confirmar compra'))
-    expect(pagina.contenedor.querySelector('.alert-danger').textContent).toContain('Completa todos los datos')
-    expect(memoria.tecnoShopCart).toBeDefined()
-    expect(pagina.rutaActual()).toBe('/checkout')
-  })
-
-  it('debe actualizar el tipo de entrega cuando el usuario lo cambia', () => {
-    abrirConCarrito(carrito)
-    escribir(campoDeEtiqueta(pagina.contenedor, 'Entrega'), 'retiro')
-    expect(campoDeEtiqueta(pagina.contenedor, 'Entrega').value).toBe('retiro')
-  })
-
-  it('debe vaciar el carrito y mostrar la compra exitosa cuando los datos están completos', () => {
-    abrirConCarrito(carrito)
-    escribir(campoDeEtiqueta(pagina.contenedor, 'Nombre completo'), 'Ana Pérez')
-    escribir(campoDeEtiqueta(pagina.contenedor, 'Teléfono'), '912345678')
-    escribir(campoDeEtiqueta(pagina.contenedor, 'Dirección'), 'Los Cristales 123')
-    escribir(campoDeEtiqueta(pagina.contenedor, 'Comuna'), 'Cerrillos')
-    clic(botonConTexto(pagina.contenedor, 'Confirmar compra'))
-    expect(memoria.tecnoShopCart).toBeUndefined()
-    expect(pagina.rutaActual()).toBe('/compra-exitosa')
-  })
-
-  it('debe ofrecer el enlace para simular un pago rechazado', () => {
-    abrirConCarrito(carrito)
-    expect(pagina.contenedor.querySelector('a[href="/compra-fallida"]')).not.toBeNull()
+  it('evita un segundo envío mientras la compra está pendiente', async () => {
+    let resolve
+    fetchMock.and.returnValue(new Promise((r) => { resolve=r }))
+    enviarFormulario(pagina.contenedor.querySelector('form')); enviarFormulario(pagina.contenedor.querySelector('form'))
+    expect(fetchMock.calls.count()).toBe(1)
+    resolve(await response({id:9,total:10000},201)); await esperar()
   })
 })

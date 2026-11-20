@@ -3,3 +3,10 @@ dist/
 coverage/
 .env
 .DS_Store
+
+.env
+.env.local
+.env.*.local
+coverage/
+
+.tools/

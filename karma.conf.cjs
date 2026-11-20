@@ -14,7 +14,8 @@ module.exports = function (config) {
       mode: 'development',
       plugins: [
         new webpack.DefinePlugin({
-          'import.meta.env.BASE_URL': JSON.stringify('/')
+          'import.meta.env.BASE_URL': JSON.stringify('/'),
+          'import.meta.env.VITE_API_URL': JSON.stringify('/api/v1')
         })
       ],
       module: {

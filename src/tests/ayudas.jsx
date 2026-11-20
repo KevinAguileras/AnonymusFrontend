@@ -70,3 +70,5 @@ export function campoDeEtiqueta(contenedor, etiqueta) {
   const nombre = Array.from(contenedor.querySelectorAll('label')).find((item) => item.textContent.trim() === etiqueta)
   return nombre.parentElement.querySelector('input, select, textarea')
 }
+
+export async function esperar() { await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)) }) }

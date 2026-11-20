@@ -1,3 +1,5 @@
+import { mockCatalog } from './apiFixtures'
+import { esperar } from './ayudas'
 import React from 'react'
 import { campoDeEtiqueta, botonConTexto, clic, escribir, montar, simularLocalStorage } from './ayudas'
 import Products from '../pages/Products'
@@ -12,17 +14,20 @@ describe('Products (catálogo con filtros)', () => {
 
   beforeEach(() => {
     simularLocalStorage()
+    mockCatalog()
   })
 
   afterEach(() => pagina.desmontar())
 
-  it('debe mostrar todos los productos al comienzo', () => {
+  it('debe mostrar todos los productos al comienzo', async () => {
     pagina = montar(<Products />)
+    await esperar()
     expect(tarjetas()).toBe(productosIniciales.length)
   })
 
-  it('debe filtrar por el texto buscado', () => {
+  it('debe filtrar por el texto buscado', async () => {
     pagina = montar(<Products />)
+    await esperar()
     escribir(campoDeEtiqueta(pagina.contenedor, 'Buscar'), 'monitor')
     const esperados = productosIniciales.filter((producto) => (
       producto.nombre.toLowerCase().includes('monitor') || producto.categoria.includes('monitor')
@@ -31,36 +36,41 @@ describe('Products (catálogo con filtros)', () => {
     expect(esperados).toBeGreaterThan(0)
   })
 
-  it('debe filtrar por categoría', () => {
+  it('debe filtrar por categoría', async () => {
     pagina = montar(<Products />)
+    await esperar()
     escribir(campoDeEtiqueta(pagina.contenedor, 'Categoría'), 'monitores')
     expect(tarjetas()).toBe(productosIniciales.filter((producto) => producto.categoria === 'monitores').length)
   })
 
-  it('debe filtrar por precio máximo', () => {
+  it('debe filtrar por precio máximo', async () => {
     pagina = montar(<Products />)
+    await esperar()
     escribir(campoDeEtiqueta(pagina.contenedor, 'Precio máximo'), '50000')
     const esperados = productosIniciales.filter((producto) => producto.precio <= 50000).length
     expect(tarjetas()).toBe(esperados)
     expect(esperados).toBeLessThan(productosIniciales.length)
   })
 
-  it('debe mostrar un mensaje cuando ningún producto coincide', () => {
+  it('debe mostrar un mensaje cuando ningún producto coincide', async () => {
     pagina = montar(<Products />)
+    await esperar()
     escribir(campoDeEtiqueta(pagina.contenedor, 'Buscar'), 'zzzzzz')
     expect(tarjetas()).toBe(0)
     expect(pagina.contenedor.textContent).toContain('No se encontraron productos')
   })
 
-  it('debe restablecer los filtros con el botón Limpiar', () => {
+  it('debe restablecer los filtros con el botón Limpiar', async () => {
     pagina = montar(<Products />)
+    await esperar()
     escribir(campoDeEtiqueta(pagina.contenedor, 'Buscar'), 'zzzzzz')
     clic(botonConTexto(pagina.contenedor, 'Limpiar'))
     expect(tarjetas()).toBe(productosIniciales.length)
   })
 
-  it('debe aplicar el texto que llega en la dirección (?q=)', () => {
+  it('debe aplicar el texto que llega en la dirección (?q=)', async () => {
     pagina = montar(<Products />, { ruta: '/productos?q=monitor' })
+    await esperar()
     expect(tarjetas()).toBeLessThan(productosIniciales.length)
     expect(campoDeEtiqueta(pagina.contenedor, 'Buscar').value).toBe('monitor')
   })

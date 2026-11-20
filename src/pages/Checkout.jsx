@@ -1,52 +1,31 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { cartTotal, clearCart, getCart } from '../services/cartService'
-
-function Checkout() {
+import { purchase } from '../services/orderService'
+export default function Checkout() {
   const navigate = useNavigate()
-  const cart = getCart()
-  const [form, setForm] = useState({ nombre: '', direccion: '', comuna: '', telefono: '', entrega: 'domicilio', pago: 'tarjeta' })
+  const [cart] = useState(getCart)
+  const [busy, setBusy] = useState(false)
+  const pending = useRef(false)
   const [error, setError] = useState('')
-
-  const handleChange = (event) => setForm({ ...form, [event.target.name]: event.target.value })
-
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault()
-    if (!form.nombre.trim() || !form.direccion.trim() || !form.comuna.trim() || !form.telefono.trim()) {
-      setError('Completa todos los datos de entrega antes de continuar.')
-      return
-    }
-    clearCart()
-    navigate('/compra-exitosa', { state: { total: cartTotal(cart), entrega: form.entrega } })
+    if (pending.current) return
+    pending.current = true; setBusy(true); setError('')
+    try {
+      const order = await purchase(cart)
+      clearCart(); window.dispatchEvent(new Event('cartUpdated'))
+      navigate('/compra-exitosa', { state: { total: order.total, orderId: order.id } })
+    } catch (err) { setError(err.message) }
+    finally { pending.current = false; setBusy(false) }
   }
-
-  if (cart.length === 0) {
-    return <div className="alert alert-info">No tienes productos para comprar. <Link to="/productos">Volver al catálogo</Link>.</div>
-  }
-
-  return (
-    <section>
-      <div className="section-title-bar" style={{ borderColor: 'var(--border-color)' }}>
-        <h2 style={{ color: 'var(--purple-700)' }}>Checkout</h2>
-        <span>Datos de entrega y pago</span>
-      </div>
-      <form className="card p-4 shadow-sm" onSubmit={submit}>
-        {error && <div className="alert alert-danger">{error}</div>}
-        <div className="row g-3">
-          <div className="col-12 col-md-6"><label className="form-label">Nombre completo</label><input className="form-control" name="nombre" value={form.nombre} onChange={handleChange} /></div>
-          <div className="col-12 col-md-6"><label className="form-label">Teléfono</label><input className="form-control" name="telefono" value={form.telefono} onChange={handleChange} /></div>
-          <div className="col-12"><label className="form-label">Dirección</label><input className="form-control" name="direccion" value={form.direccion} onChange={handleChange} /></div>
-          <div className="col-12 col-md-6"><label className="form-label">Comuna</label><input className="form-control" name="comuna" value={form.comuna} onChange={handleChange} /></div>
-          <div className="col-12 col-md-6"><label className="form-label">Entrega</label><select className="form-select" name="entrega" value={form.entrega} onChange={handleChange}><option value="domicilio">Despacho a domicilio</option><option value="retiro">Retiro en tienda</option></select></div>
-          <div className="col-12 col-md-6"><label className="form-label">Medio de pago</label><select className="form-select" name="pago" value={form.pago} onChange={handleChange}><option value="tarjeta">Tarjeta</option><option value="transferencia">Transferencia</option></select></div>
-        </div>
-        <div className="d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
-          <strong>Total: ${Number(cartTotal(cart)).toLocaleString('es-CL')}</strong>
-          <div className="d-flex gap-2 flex-wrap"><Link to="/carrito" className="btn btn-outline-secondary">Volver</Link><Link to="/compra-fallida" className="btn btn-outline-danger">Simular pago rechazado</Link><button type="submit" className="btn btn-primary">Confirmar compra</button></div>
-        </div>
-      </form>
-    </section>
-  )
+  if (!cart.length) return <p>No tienes productos para comprar. <Link to="/productos">Volver al catálogo</Link></p>
+  return <section><h2>Confirmar compra</h2><form className="card p-4" onSubmit={submit}>
+    <p>Demostración académica: registra una compra sin realizar un cobro real.</p>
+    <ul>{cart.map((item) => <li key={item.id}>{item.nombre} × {item.cantidad}</li>)}</ul>
+    <p>Total estimado: ${Number(cartTotal(cart)).toLocaleString('es-CL')}. El servidor confirma los precios y el stock.</p>
+    {error && <p role="alert" className="alert alert-danger">{error}</p>}
+    <button className="btn btn-primary" disabled={busy}>{busy ? 'Registrando…' : 'Confirmar compra'}</button>
+    <Link to="/carrito">Volver al carrito</Link>
+  </form></section>
 }
-
-export default Checkout

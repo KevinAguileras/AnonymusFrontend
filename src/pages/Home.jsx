@@ -1,10 +1,11 @@
+import useResource from '../hooks/useResource'
+import ResourceStatus from '../components/ResourceStatus'
 import { Link } from 'react-router-dom'
-import { useMemo } from 'react'
 import { getProducts } from '../services/productService'
 import ProductCard from '../components/ProductCard'
 
 function Home() {
-  const products = useMemo(() => getProducts(), [])
+  const { data: products, loading, error } = useResource(getProducts)
   const destacados = products.slice(0, 8)
 
   return (
@@ -33,6 +34,8 @@ function Home() {
             Ver catálogo completo →
           </Link>
         </div>
+        <ResourceStatus loading={loading} error={error} />
+        {!loading && !error && !products.length && <p>Aún no hay productos disponibles.</p>}
         <div className="row g-3">
           {destacados.map((producto) => (
             <div className="col-12 col-md-6 col-xl-3" key={producto.id}>
